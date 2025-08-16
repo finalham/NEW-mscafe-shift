@@ -29,11 +29,12 @@
 <main>
   <!-- 従業員管理 -->
   <div class="card">
-    <h3 style="margin:0 0 8px">従業員</h3>
+    <h3 style="margin:0 0 8px">従業員（時給・交通費）</h3>
     <div class="grid">
       <div><label>氏名</label><input id="emp_name"></div>
       <div><label>社員番号</label><input id="emp_code"></div>
       <div><label>時給（円）</label><input id="emp_wage" type="number" inputmode="numeric" min="0"></div>
+      <div><label>交通費（月額・定額／円）</label><input id="emp_commute" type="number" inputmode="numeric" min="0" value="0"></div>
     </div>
     <div class="grid" style="margin-top:12px">
       <button id="btnAdd" class="btn primary">➕ 追加/更新</button>
@@ -41,15 +42,15 @@
       <div></div>
     </div>
     <table id="empTable" style="margin-top:12px">
-      <thead><tr><th>状態</th><th>氏名</th><th>番号</th><th>時給</th><th>操作</th></tr></thead>
+      <thead><tr><th>状態</th><th>氏名</th><th>番号</th><th style="text-align:right">時給</th><th style="text-align:right">交通費</th><th>操作</th></tr></thead>
       <tbody></tbody>
     </table>
     <p class="muted" id="empMsg" style="margin-top:8px"></p>
   </div>
 
-  <!-- 給与ルール -->
+  <!-- 給与ルール（共通） -->
   <div class="card">
-    <h3 style="margin:0 0 8px">給与ルール</h3>
+    <h3 style="margin:0 0 8px">給与ルール（共通）</h3>
     <div class="grid">
       <div><label>開始丸め（分）</label><input id="r_start" type="number" min="1" value="5"></div>
       <div><label>終了丸め（分）</label><input id="r_end" type="number" min="1" value="5"></div>
@@ -62,7 +63,6 @@
         </select>
       </div>
       <div><label>時給デフォルト（円）</label><input id="r_wage" type="number" min="0" value="1100"></div>
-      <div><label>交通費（月額・定額）</label><input id="r_commute" type="number" min="0" value="0"></div>
     </div>
     <div class="grid" style="margin-top:12px">
       <button id="btnSaveRules" class="btn primary">💾 ルール保存</button>
@@ -84,11 +84,11 @@
 </main>
 
 <script>
+/* API B（必要なら差し替えてください） */
 const API_B = 'https://script.google.com/macros/s/AKfycbxdAZGMCSF9rsAwgkQgfhHC9Ijrb80Lox0FfWRSVtIncEbEj2ATbSZy6cHVxRSGnvjg/exec';
 
 async function getJSON(url){ const r=await fetch(url,{credentials:"omit",cache:"no-store"}); return await r.json(); }
 async function postJSON(url, obj){ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(obj)}); return await r.json(); }
-
 function yen(n){ return (Number(n)||0).toLocaleString() }
 
 async function loadEmployees(){
@@ -101,8 +101,9 @@ async function loadEmployees(){
       <td>${e.name}</td>
       <td>${e.code||''}</td>
       <td style="text-align:right">${yen(e.hourly_wage)}</td>
+      <td style="text-align:right">${yen(e.commute_fixed)}</td>
       <td>
-        <button class="btn ghost" data-act="edit" data-id="${e.id}" data-name="${e.name}" data-code="${e.code||''}" data-wage="${e.hourly_wage||0}">編集</button>
+        <button class="btn ghost" data-act="edit" data-id="${e.id}" data-name="${e.name}" data-code="${e.code||''}" data-wage="${e.hourly_wage||0}" data-commute="${e.commute_fixed||0}">編集</button>
         <button class="btn ${e.active?'warn':'ghost'}" data-act="toggle" data-id="${e.id}">${e.active?'無効化':'有効化'}</button>
       </td>`;
     tb.appendChild(tr);
@@ -118,6 +119,7 @@ async function loadEmployees(){
         document.getElementById('emp_name').value = b.dataset.name;
         document.getElementById('emp_code').value = b.dataset.code||'';
         document.getElementById('emp_wage').value = b.dataset.wage||'';
+        document.getElementById('emp_commute').value = b.dataset.commute||'0';
         document.getElementById('btnAdd').dataset.editId = id; // 更新モード
         window.scrollTo({top:0,behavior:'smooth'});
       }
@@ -129,12 +131,14 @@ async function upsertEmployee(){
   const name = document.getElementById('emp_name').value.trim();
   const code = document.getElementById('emp_code').value.trim();
   const wage = Number(document.getElementById('emp_wage').value||0);
+  const commute = Number(document.getElementById('emp_commute').value||0);
   if(!name){ alert('氏名を入力'); return; }
   const id = document.getElementById('btnAdd').dataset.editId || ''; // 空なら新規
-  const res = await postJSON(API_B+'?action=employee_upsert',{id,name,code,hourly_wage:wage,commute_fixed:0});
+  const res = await postJSON(API_B+'?action=employee_upsert',{id,name,code,hourly_wage:wage,commute_fixed:commute});
   document.getElementById('empMsg').textContent = res.ok? '保存しました':'エラー：'+(res.error||'');
   document.getElementById('btnAdd').dataset.editId='';
   document.getElementById('emp_name').value=''; document.getElementById('emp_code').value=''; document.getElementById('emp_wage').value='';
+  document.getElementById('emp_commute').value='0';
   loadEmployees();
 }
 
@@ -146,7 +150,6 @@ async function loadRules(){
   document.getElementById('r_worked').value= v.round_worked||1;
   document.getElementById('r_mode').value  = v.round_mode||'floor';
   document.getElementById('r_wage').value  = v.default_wage||1100;
-  document.getElementById('r_commute').value = v.commute_fixed||0;
 }
 
 async function saveRules(){
@@ -155,8 +158,7 @@ async function saveRules(){
     round_end:Number(document.getElementById('r_end').value||5),
     round_worked:Number(document.getElementById('r_worked').value||1),
     round_mode:String(document.getElementById('r_mode').value||'floor'),
-    default_wage:Number(document.getElementById('r_wage').value||1100),
-    commute_fixed:Number(document.getElementById('r_commute').value||0),
+    default_wage:Number(document.getElementById('r_wage').value||1100)
   };
   const res = await postJSON(API_B+'?action=rules_save', body);
   document.getElementById('ruleMsg').textContent = res.ok? '保存しました':'エラー：'+(res.error||'');
