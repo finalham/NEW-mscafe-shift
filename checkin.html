@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mscafe SHIFT | 打刻フォーム</title>
+<style>
+  :root{--bg:#fafafa;--ink:#222;--muted:#666;--brand:#2e7d6b;--line:#e7e7e7;}
+  *{box-sizing:border-box} body{margin:0;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;color:var(--ink);background:var(--bg);}
+  header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;font-weight:700;color:var(--brand);}
+  main{max-width:780px;margin:0 auto;padding:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 14px 18px;margin:12px 0;box-shadow:0 4px 14px rgba(0,0,0,.03)}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+  input,select,button{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:16px}
+  input:focus,select:focus{outline:2px solid rgba(46,125,107,.15);border-color:var(--brand)}
+  .row{display:grid;grid-template-columns:1fr;gap:12px}
+  .btn{cursor:pointer;font-weight:700}
+  .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .btn.ghost{background:#fff;color:var(--brand)}
+  .muted{color:var(--muted);font-size:13px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px}
+  thead th{background:#f7f7f7;position:sticky;top:0}
+  @media(min-width:680px){ .row{grid-template-columns:repeat(2,1fr)} }
+</style>
+</head>
+<body>
+<header>打刻フォーム</header>
+<main>
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>従業員</label>
+        <select id="emp"></select>
+      </div>
+      <div>
+        <label>休憩（分）</label>
+        <input id="break" type="number" inputmode="numeric" min="0" step="5" value="0">
+      </div>
+      <div>
+        <label>開始（日時）</label>
+        <input id="start" type="datetime-local">
+      </div>
+      <div>
+        <label>終了（日時）</label>
+        <input id="end" type="datetime-local">
+      </div>
+      <div>
+        <label>拠点（任意）</label>
+        <input id="site" placeholder="例：HQ / 店舗A">
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="btnNow" class="btn ghost">🕒 現在時刻をセット</button>
+      <button id="btnSave" class="btn primary">💾 保存</button>
+    </div>
+    <p id="msg" class="muted" style="margin-top:10px"></p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 8px">最近の入力</h3>
+    <table id="recent">
+      <thead><tr><th>氏名</th><th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+/* ▼ここが差し替え済み（API A の Web アプリURL） */
+const API_A = 'https://script.google.com/macros/s/AKfycbwZj9yYSMNfbTLGyPRXwm73oK4GuMVbO1bvcVjnZlbIYT5Zg5J4deMP2gWXqimBp6Tg3g/exec';
+
+function pad(n){return String(n).padStart(2,'0')}
+function toLocalInputValue(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes()) }
+function hm(d){ return pad(d.getHours())+":"+pad(d.getMinutes()) }
+
+async function getJSON(url){
+  const r = await fetch(url, {credentials:"omit", cache:"no-store"}); 
+  return await r.json();
+}
+async function postJSON(url, obj){
+  // プリフライト回避のため text/plain で送信
+  const r = await fetch(url, {method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(obj)});
+  return await r.json();
+}
+
+async function loadEmployees(){
+  const data = await getJSON(API_A+'?action=employees');
+  const sel = document.getElementById('emp');
+  sel.innerHTML = '';
+  (data.employees||[]).filter(e=>e.active).forEach(e=>{
+    const o = document.createElement('option'); o.value=e.id; o.textContent=e.name; sel.appendChild(o);
+  });
+}
+
+function setNow(){
+  const now = new Date();
+  const v = toLocalInputValue(now);
+  document.getElementById('start').value = v;
+  document.getElementById('end').value = v;
+}
+
+async function saveShift(){
+  const emp = document.getElementById('emp').value;
+  const start = document.getElementById('start').value;
+  const end = document.getElementById('end').value;
+  const br = parseInt(document.getElementById('break').value||'0');
+  if(!emp || !start || !end){ alert('従業員/開始/終了 を入力してください'); return; }
+  const body = {
+    employee_id: emp,
+    employee_name: document.getElementById('emp').selectedOptions[0]?.text || '',
+    site: document.getElementById('site').value || '',
+    date: start.slice(0,10),
+    startISO: new Date(start).toISOString(),
+    endISO: new Date(end).toISOString(),
+    break_min: br,
+    user_agent: navigator.userAgent
+  };
+  const res = await postJSON(API_A+'?action=shift', body);
+  const msg = document.getElementById('msg');
+  if(res && res.ok){
+    msg.textContent = `保存しました。実働 ${(res.worked_min/60).toFixed(2)} h / 概算日給 ${res.daily_pay?.toLocaleString?.()||res.daily_pay} 円`;
+    addRecentRow(body.employee_name, body.date, start, end, br);
+  }else{
+    msg.textContent = 'エラー：' + (res && res.error ? res.error : '不明なエラー');
+  }
+}
+
+function addRecentRow(name, date, start, end, br){
+  const tb = document.querySelector('#recent tbody');
+  const tr = document.createElement('tr');
+  const st = new Date(start), ed = new Date(end);
+  tr.innerHTML = `<td>${name||''}</td><td>${date}</td><td>${hm(st)}</td><td>${hm(ed)}</td><td style="text-align:right">${br}</td>`;
+  tb.prepend(tr);
+}
+
+document.getElementById('btnNow').onclick = setNow;
+document.getElementById('btnSave').onclick = saveShift;
+
+(async function init(){
+  await loadEmployees();
+  setNow();
+})();
+</script>
+</body>
+</html>
