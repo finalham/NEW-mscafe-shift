@@ -2,127 +2,161 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>Mscafe SHIFT – 打刻</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{--ink:#2b2b2b;--muted:#7a6f69;--line:#e8e2db;--bg:#faf6f1;--card:#fff;--brand:#3e7a6b}
-  *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 'Noto Sans JP','Montserrat',system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-  header{position:sticky;top:0;z-index:10;background:linear-gradient(#fff,#fff),url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width=\"1200\" height=\"120\"><defs><linearGradient id=\"g\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop stop-color=\"%23fff\"/><stop offset=\"1\" stop-color=\"%23fff\"/></linearGradient></defs><rect fill=\"url(%23g)\" width=\"1200\" height=\"120\"/></svg>') center/cover;border-bottom:1px solid var(--line)}
-  .wrap{max-width:720px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:12px}
-  .title{font-weight:700;font-size:20px;letter-spacing:.02em}
-  main{max-width:720px;margin:0 auto;padding:16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.04);padding:14px}
-  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
-  input,select,button{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
-  input[type=number]{-moz-appearance:textfield} input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{appearance:none;margin:0}
+  :root{
+    --bg:#fff7f2;--card:#ffffff;--ink:#1f2937;--muted:#6b7280;--line:#efe7df;
+    --brand:#0e9f6e;--brand-ink:#fff;--danger:#dc2626
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Inter","Noto Sans JP",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line)}
+  .wrap{max-width:640px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:10px}
+  .brand{font-size:20px;font-weight:700;letter-spacing:.02em}
+  main{max-width:640px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.05);padding:14px}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+  select,input,button{width:100%;padding:14px 12px;border:1px solid var(--line);border-radius:12px;font:inherit;background:#fff}
+  input[type="number"]{appearance:textfield} input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{appearance:none;margin:0}
   .row{display:flex;gap:12px;flex-wrap:wrap}
-  .col{flex:1 1 220px}
-  .btn{background:var(--brand);color:#fff;border-color:#2e5d52;cursor:pointer}
+  .col{flex:1 1 240px}
+  .btn{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);font-weight:600}
   .btn-ghost{background:#fff;color:var(--brand);border-color:var(--brand)}
-  .msg{margin-top:8px;font-size:13px;color:var(--muted)}
-  .msg.ok{color:#2e7d32}.msg.err{color:#c62828}
-  table{width:100%;border-collapse:collapse;margin-top:12px}
-  th,td{border-top:1px solid var(--line);padding:8px;font-variant-numeric:tabular-nums}
+  .btn-sm{padding:10px 12px;border-radius:10px}
+  .msg{margin-top:10px;font-size:14px}
+  .msg.ok{color:#166534}.msg.err{color:var(--danger)}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-variant-numeric:tabular-nums}
+  th,td{padding:10px;border-top:1px solid var(--line)}
   th{background:#fafafa;text-align:left}
+  .help{color:var(--muted);font-size:13px}
+  @media (min-width:700px){
+    html,body{font-size:17px}
+    .wrap{padding:14px 18px}
+  }
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div style="font-size:26px">☕</div>
-    <div class="title">Mscafe SHIFT – 打刻</div>
-    <button id="btnNow" class="btn-ghost" style="margin-left:auto;flex:0 0 auto">🕒 現在時刻をセット</button>
+    <div style="font-size:24px">☕</div>
+    <div class="brand">Mscafe SHIFT – 打刻</div>
+    <button id="btnNow" class="btn-ghost btn-sm" style="margin-left:auto;flex:0 0 auto">🕒 現在時刻をセット</button>
   </div>
 </header>
 
 <main>
   <div class="card">
-    <label>従業員</label>
-    <select id="emp"></select>
+    <div class="row" style="align-items:flex-end">
+      <div class="col">
+        <label>従業員</label>
+        <select id="emp">
+          <option value="" disabled selected>— 読み込み中 … —</option>
+        </select>
+        <div class="help" id="empHelp"></div>
+      </div>
+      <div class="col" style="flex:0 0 120px">
+        <button id="btnReloadEmp" class="btn-ghost btn-sm" title="従業員を読み直す">再読み込み</button>
+      </div>
+    </div>
 
     <div class="row">
       <div class="col">
         <label>休憩（分）</label>
-        <input id="brk" type="number" min="0" step="5" value="0"/>
+        <input id="brk" type="number" min="0" step="5" value="0" inputmode="numeric"/>
       </div>
     </div>
 
-    <label>開始（日付時刻）</label>
-    <input id="start" type="datetime-local"/>
+    <label>開始（日時）</label>
+    <input id="start" type="datetime-local" autocomplete="off"/>
 
-    <label>終了（日付時刻）</label>
-    <input id="end" type="datetime-local"/>
+    <label>終了（日時）</label>
+    <input id="end" type="datetime-local" autocomplete="off"/>
 
-    <div class="row" style="margin-top:10px">
+    <div class="row" style="margin-top:12px">
       <div class="col"><button id="btnSave" class="btn">💾 保存</button></div>
     </div>
     <div id="msg" class="msg"></div>
   </div>
 
   <div class="card" style="margin-top:14px">
-    <div class="row" style="align-items:center;gap:8px"><b>最近の入力（同日があれば上書きされます）</b></div>
+    <b>最近の入力（同日があれば上書きされます）</b>
     <table>
       <thead><tr><th>氏名</th><th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th></tr></thead>
-      <tbody id="hist"></tbody>
+      <tbody id="hist"><tr><td colspan="5" class="help">— まだありません —</td></tr></tbody>
     </table>
   </div>
 </main>
 
 <script>
+/* === 設定（あなたのAのURL） === */
 const API_BASE = 'https://script.google.com/macros/s/AKfycbwZj9yYSMNfbTLGyPRXwm73oK4GuMVbO1bvcVjnZlbIYT5Zg5J4deMP2gWXqimBp6Tg3g/exec';
 
-const $ = (id)=>document.getElementById(id);
+/* === 便利関数 === */
+const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,'0');
 const toLocalInputValue = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function showMsg(text, ok=false){ const el=$('msg'); el.textContent=text; el.className='msg '+(ok?'ok':'err'); }
 
-function setNow() {
+/* === 現在時刻セット === */
+function setNow(){
   const d = new Date();
   const v = toLocalInputValue(d);
   $('start').value = v;
-  $('end').value = v;
+  $('end').value   = v;
 }
 
-async function loadEmployees() {
-  const res = await fetch(`${API_BASE}?action=employees`);
-  const j = await res.json();
-  const sel = $('emp'); sel.innerHTML = '';
-  (j.employees||[]).filter(e=>e.active).forEach(e=>{
-    const o = document.createElement('option');
-    o.value = e.id; o.textContent = e.name; sel.appendChild(o);
-  });
+/* === 従業員ロード（失敗原因も表示） === */
+async function loadEmployees(){
+  const sel = $('emp');
+  const help = $('empHelp');
+  sel.innerHTML = `<option value="" disabled selected>— 読み込み中 … —</option>`;
+  help.textContent = '';
+  try{
+    const url = `${API_BASE}?action=employees&_=${Date.now()}`; // キャッシュ回避
+    const res = await fetch(url, {method:'GET', mode:'cors', headers:{'Accept':'application/json'}});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const j = await res.json();
+    const list = (j && j.employees) ? j.employees.filter(e=>e.active) : [];
+    sel.innerHTML = '';
+    if(list.length===0){
+      sel.innerHTML = `<option value="" disabled selected>— 従業員が見つかりません —</option>`;
+      help.textContent = 'Employees シートに id・name・active=TRUE の行があるか確認してください。';
+      return;
+    }
+    sel.appendChild(new Option('— 選択してください —','',true,true));
+    sel.options[0].disabled = true;
+    list.forEach(e=> sel.appendChild(new Option(e.name, e.id)));
+  }catch(err){
+    sel.innerHTML = `<option value="" disabled selected>— 取得できません —</option>`;
+    help.innerHTML = `読み込み失敗：${(err && err.message)||err}。<br>・AのURLが正しいか<br>・Aのデプロイを更新済みか<br>・CORS許可（コード済） を確認してください。`;
+  }
 }
 
-function showMsg(text, ok=false) {
-  const el = $('msg');
-  el.textContent = text;
-  el.className = 'msg ' + (ok ? 'ok':'err');
-}
-
-function validateTimes() {
-  const start = $('start').value;
-  const end   = $('end').value;
-  if (!start || !end) return {ok:false, msg:'開始と終了を入力してください'};
-  const s = new Date(start), e = new Date(end);
-  if (isNaN(s) || isNaN(e)) return {ok:false, msg:'日時の形式が正しくありません'};
-  if (e <= s) return {ok:false, msg:'退勤時間は開始時間より後にしてください'};
+/* === 入力バリデーション（退勤>出勤） === */
+function validateTimes(){
+  const sVal = $('start').value, eVal = $('end').value;
+  if(!sVal || !eVal) return {ok:false, msg:'開始と終了を入力してください'};
+  const s = new Date(sVal), e = new Date(eVal);
+  if(isNaN(s) || isNaN(e)) return {ok:false, msg:'日時の形式が正しくありません'};
+  if(e <= s) return {ok:false, msg:'退勤時間は開始時間より後にしてください'};
   return {ok:true, s, e};
 }
 
-async function save() {
+/* === 保存 === */
+async function save(){
   const empSel = $('emp');
   const empId = empSel.value;
-  if (!empId) { showMsg('従業員を選択してください'); return; }
+  if(!empId){ showMsg('従業員を選択してください'); return; }
   const empName = empSel.selectedOptions[0].textContent;
 
   const v = validateTimes();
-  if (!v.ok) { showMsg(v.msg); return; }
+  if(!v.ok){ showMsg(v.msg); return; }
 
   const brk = Number($('brk').value || 0);
   const date = $('start').value.slice(0,10);
-
   const payload = {
     employee_id: empId,
     employee_name: empName,
@@ -134,33 +168,43 @@ async function save() {
     user_agent: navigator.userAgent
   };
 
-  try {
-    // ★ iOS/Safari のプリフライト回避：text/plain で送る
+  try{
+    // iOS/Safariのプリフライト回避：text/plain で送る
     const res = await fetch(`${API_BASE}?action=shift`, {
-      method: 'POST',
-      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      method:'POST',
+      mode:'cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8','Accept':'application/json'},
       body: JSON.stringify(payload)
     });
-    const j = await res.json();
-    if (!j.ok) throw new Error(j.error||'save failed');
+    // 失敗時に HTML が返ると JSON で落ちる → 明示チェック
+    const text = await res.text();
+    let j;
+    try{ j = JSON.parse(text); }catch{ throw new Error('サーバからJSON以外が返りました'); }
+    if(!j.ok) throw new Error(j.error||'save failed');
+
     showMsg(`保存しました。実働 ${(j.worked_min/60).toFixed(2)} h / 日給 ${j.daily_pay.toLocaleString()} 円`, true);
     addHistoryRow(empName, date, $('start').value.slice(11,16), $('end').value.slice(11,16), brk);
-  } catch (err) {
-    showMsg('保存に失敗しました：' + (err.message || err));
+  }catch(err){
+    showMsg('保存に失敗しました：' + (err.message||err));
   }
 }
 
-function addHistoryRow(name, date, s, e, brk) {
+/* === 最近の入力 表示 === */
+function addHistoryRow(name, date, s, e, brk){
+  const tb = $('hist');
+  if(tb.children.length===1 && tb.children[0].tagName==='TR' && tb.children[0].children.length===1){ tb.innerHTML=''; }
   const tr = document.createElement('tr');
   tr.innerHTML = `<td>${name}</td><td>${date}</td><td>${s}</td><td>${e}</td><td>${brk}</td>`;
-  $('hist').prepend(tr);
+  tb.prepend(tr);
 }
 
+/* === 初期化 === */
 document.addEventListener('DOMContentLoaded', async ()=>{
+  $('btnNow').addEventListener('click', setNow);
+  $('btnReloadEmp').addEventListener('click', loadEmployees);
+  $('btnSave').addEventListener('click', save);
   await loadEmployees();
   setNow();
-  $('btnNow').addEventListener('click', setNow);
-  $('btnSave').addEventListener('click', save);
 });
 </script>
 </body>
