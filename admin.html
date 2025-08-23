@@ -6,10 +6,7 @@
 <title>Mscafe SHIFT | 管理</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#fafafa; --card:#fff; --ink:#1f2937; --muted:#6b7280;
-    --line:#e5e7eb; --brand:#2563eb; --brand-ink:#fff; --chip:#f3f4f6;
-  }
+  :root{--bg:#fafafa;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--brand:#2563eb;--brand-ink:#fff;--chip:#f3f4f6}
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 "Inter","Noto Sans JP",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
   header{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line)}
@@ -33,51 +30,34 @@
   .muted{color:var(--muted)}
   .right{margin-left:auto}
   .num{font-variant-numeric:tabular-nums}
-  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-  .hidden{display:none}
-  @media (min-width:860px){
-    .grid{display:grid;grid-template-columns:260px 1fr;gap:16px}
-  }
+  @media (min-width:860px){ .grid{display:grid;grid-template-columns:260px 1fr;gap:16px} }
 </style>
 </head>
 <body>
   <header>
     <div class="wrap row">
-      <div class="brand">
-        <span>☕</span><h1>Mscafe SHIFT | 管理</h1>
-      </div>
+      <div class="brand"><span>☕</span><h1>Mscafe SHIFT | 管理</h1></div>
       <div class="right row">
         <input type="month" id="mon" />
         <button class="btn-ghost" id="btnRefresh">🔄 更新</button>
         <button class="btn" id="btnCsvAll">📩 CSV（全体）</button>
-        <button class="btn-ghost" id="btnMonthly">月次一覧</button>
       </div>
     </div>
   </header>
 
   <main>
     <div class="grid">
-      <!-- 左：従業員（クリックで個別CSV） -->
       <div class="card">
         <div class="pad">
           <div class="muted" style="margin-bottom:8px">氏名</div>
           <div id="empList" class="chips"></div>
         </div>
       </div>
-
-      <!-- 右：サマリテーブル -->
       <div class="card">
         <div class="pad">
           <table id="sumTable" class="num">
             <thead>
-              <tr>
-                <th>氏名</th>
-                <th>勤務日数</th>
-                <th>総時間(h)</th>
-                <th>基本支給</th>
-                <th>総支給</th>
-                <th class="hidden">CSV</th>
-              </tr>
+              <tr><th>氏名</th><th>勤務日数</th><th>総時間(h)</th><th>基本支給</th><th>総支給</th></tr>
             </thead>
             <tbody id="sumBody"></tbody>
           </table>
@@ -87,162 +67,108 @@
   </main>
 
 <script>
-const API_B = 'https://script.google.com/macros/s/AKfycbyXku_YsY0Yh8hZvDSwlp0ilu3ZLLXsamvwDTYnLt5LrAMgYQYWMAa-xABFi8vRXv-w/exec';
+  // ★あなたの GAS(B) の /exec に固定
+  const BASE = 'https://script.google.com/macros/s/AKfycbyXku_YsY0Yh8hZvDSwlp0ilu3ZLLXsamvwDTYnLt5LrAMgYQYWMAa-xABFi8vRXv-w/exec';
 
-const $ = (sel)=>document.querySelector(sel);
-const fmtYen = n => Number(n||0).toLocaleString('ja-JP');
-const pad2 = n => String(n).padStart(2,'0');
+  const $ = (s)=>document.querySelector(s);
+  const fmtYen = n => Number(n||0).toLocaleString('ja-JP');
+  const pad2 = n => String(n).padStart(2,'0');
 
-// ========== CSV ダウンロード（強制保存） ==========
-async function downloadCsvAll(){
-  const m = $('#mon').value;
-  if(!m){ alert('対象月を選択してください'); return; }
-  const url = `${API_B}?action=report_csv&month=${encodeURIComponent(m)}`;
-  const res = await fetch(url, { credentials:'include' });
-  if(!res.ok){ alert('CSV取得に失敗しました'); return; }
-  const text = await res.text();
-  const blob = new Blob(['\uFEFF' + text], {type:'text/csv;charset=utf-8;'});
-  triggerDownload(blob, `mscafe_report_${m}.csv`);
-}
-
-async function downloadCsvOne(empId, empName){
-  const m = $('#mon').value;
-  if(!m){ alert('対象月を選択してください'); return; }
-  const url = `${API_B}?action=report_csv&month=${encodeURIComponent(m)}&employee_id=${encodeURIComponent(empId)}`;
-  const res = await fetch(url, { credentials:'include' });
-  if(!res.ok){ alert('CSV取得に失敗しました'); return; }
-  const text = await res.text();
-  const safeName = (empName || empId).replace(/[\\/:*?"<>|]/g, '_');
-  const blob = new Blob(['\uFEFF' + text], {type:'text/csv;charset=utf-8;'});
-  triggerDownload(blob, `mscafe_report_${m}_${safeName}.csv`);
-}
-
-function triggerDownload(blob, filename){
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  URL.revokeObjectURL(a.href);
-  a.remove();
-}
-
-// ========== データ取得 ==========
-async function fetchSummary(month){
-  const url = `${API_B}?action=summary&month=${encodeURIComponent(month)}`;
-  const res = await fetch(url, { credentials:'include' });
-  if(!res.ok) throw new Error('summary fetch failed');
-  const json = await res.json();
-  if(!json.ok) throw new Error(json.error||'summary error');
-  return json.rows || [];
-}
-
-async function fetchEmployees(){
-  const url = `${API_B}?action=employees_full`;
-  const res = await fetch(url, { credentials:'include' });
-  if(!res.ok) throw new Error('employees fetch failed');
-  const json = await res.json();
-  if(!json.ok) throw new Error(json.error||'employees error');
-  return json.employees || [];
-}
-
-// ========== 描画 ==========
-function renderSummary(rows, employees){
-  const tbody = $('#sumBody');
-  tbody.innerHTML = '';
-
-  // id -> 表示名（無効には注記）
-  const nameMap = {};
-  employees.forEach(e=>{
-    nameMap[e.id] = e.name + (e.active ? '' : '（無効）');
-  });
-
-  rows.forEach(r=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${nameMap[r.employee_id] || r.employee_name || r.employee_id}</td>
-      <td>${r.days}</td>
-      <td>${Number(r.hours||0)}</td>
-      <td>${fmtYen(r.base_pay)}</td>
-      <td>${fmtYen(r.total_pay)}</td>
-      <td class="hidden"><button data-csv="${r.employee_id}">CSV</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // 個別CSV（隠し列を使わない場合は、左の従業員リストに付けています）
-  tbody.querySelectorAll('button[data-csv]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const id = btn.getAttribute('data-csv');
-      const nm = nameMap[id] || '';
-      downloadCsvOne(id, nm);
-    });
-  });
-}
-
-function renderEmployeesChips(rows, employees){
-  const list = $('#empList');
-  list.innerHTML = '';
-  // id -> 表示名
-  const nameMap = {};
-  employees.forEach(e=>{
-    nameMap[e.id] = e.name + (e.active ? '' : '（無効）');
-  });
-
-  // サマリの並び順で chips を出す（サマリに出てこない人も出したい時は employees をベースに）
-  const idsSeen = new Set();
-  rows.forEach(r=>{
-    idsSeen.add(r.employee_id);
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'chip';
-    chip.textContent = nameMap[r.employee_id] || r.employee_name || r.employee_id;
-    chip.addEventListener('click', ()=> downloadCsvOne(r.employee_id, nameMap[r.employee_id]||''));
-    list.appendChild(chip);
-  });
-
-  // まだ chips に無い従業員（今月0件）も出しておく
-  employees.forEach(e=>{
-    if (idsSeen.has(e.id)) return;
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'chip';
-    chip.textContent = nameMap[e.id] || e.name || e.id;
-    chip.addEventListener('click', ()=> downloadCsvOne(e.id, nameMap[e.id]||'')); // 0件でも個別CSV（サマリのみ）出力可
-    list.appendChild(chip);
-  });
-}
-
-// ========== 画面制御 ==========
-async function refresh(){
-  const m = $('#mon').value;
-  if(!m){ alert('対象月を選択してください'); return; }
-  try{
-    $('#btnRefresh').disabled = true;
-    const [rows, emps] = await Promise.all([fetchSummary(m), fetchEmployees()]);
-    renderSummary(rows, emps);
-    renderEmployeesChips(rows, emps);
-  }catch(err){
-    console.error(err);
-    alert('読込に失敗しました：' + (err.message||err));
-  }finally{
-    $('#btnRefresh').disabled = false;
+  // ===== CSV ダウンロード =====
+  async function downloadCsvAll(){
+    const m = $('#mon').value; if(!m){ alert('対象月を選択してください'); return; }
+    const res = await fetch(`${BASE}?action=report_csv&month=${encodeURIComponent(m)}`);
+    if(!res.ok){ alert('CSV取得に失敗しました'); return; }
+    const text = await res.text();
+    const blob = new Blob(['\uFEFF'+text], {type:'text/csv;charset=utf-8;'});
+    triggerDownload(blob, `mscafe_report_${m}.csv`);
   }
-}
+  async function downloadCsvOne(empId, empName){
+    const m = $('#mon').value; if(!m){ alert('対象月を選択してください'); return; }
+    const res = await fetch(`${BASE}?action=report_csv&month=${encodeURIComponent(m)}&employee_id=${encodeURIComponent(empId)}`);
+    if(!res.ok){ alert('CSV取得に失敗しました'); return; }
+    const text = await res.text();
+    const safe = (empName||empId).replace(/[\\/:*?"<>|]/g,'_');
+    triggerDownload(new Blob(['\uFEFF'+text], {type:'text/csv;charset=utf-8;'}), `mscafe_report_${m}_${safe}.csv`);
+  }
+  function triggerDownload(blob, filename){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a); a.click();
+    URL.revokeObjectURL(a.href); a.remove();
+  }
 
-function init(){
-  // 初期の対象月（本日）
-  const d = new Date();
-  $('#mon').value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+  // ===== データ取得 =====
+  async function fetchSummary(month){
+    const r = await fetch(`${BASE}?action=summary&month=${encodeURIComponent(month)}`);
+    if(!r.ok) throw new Error('summary fetch failed');
+    const j = await r.json(); if(!j.ok) throw new Error(j.error||'summary error');
+    return j.rows||[];
+  }
+  async function fetchEmployees(){
+    const r = await fetch(`${BASE}?action=employees_full`);
+    if(!r.ok) throw new Error('employees fetch failed');
+    const j = await r.json(); if(!j.ok) throw new Error(j.error||'employees error');
+    return j.employees||[];
+  }
 
-  $('#btnRefresh').addEventListener('click', refresh);
-  $('#btnCsvAll').addEventListener('click', downloadCsvAll);
-  $('#btnMonthly').addEventListener('click', ()=> alert('（任意）ここに月次画面遷移や別UIを繋げられます'));
+  // ===== 描画 =====
+  function renderSummary(rows, employees){
+    const tbody = $('#sumBody'); tbody.innerHTML = '';
+    const nameOf = {}; employees.forEach(e=> nameOf[e.id] = e.name + (e.active?'':'（無効）'));
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${nameOf[r.employee_id]||r.employee_name||r.employee_id}</td>
+        <td>${r.days}</td>
+        <td>${Number(r.hours||0)}</td>
+        <td>${fmtYen(r.base_pay)}</td>
+        <td>${fmtYen(r.total_pay)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  function renderEmployeesChips(rows, employees){
+    const el = $('#empList'); el.innerHTML='';
+    const nameOf = {}; employees.forEach(e=> nameOf[e.id] = e.name + (e.active?'':'（無効）'));
+    const seen = new Set();
+    rows.forEach(r=>{
+      seen.add(r.employee_id);
+      const b = document.createElement('button');
+      b.type='button'; b.className='chip'; b.textContent = nameOf[r.employee_id]||r.employee_name||r.employee_id;
+      b.onclick = ()=> downloadCsvOne(r.employee_id, nameOf[r.employee_id]||'');
+      el.appendChild(b);
+    });
+    employees.forEach(e=>{
+      if(seen.has(e.id)) return;
+      const b = document.createElement('button');
+      b.type='button'; b.className='chip'; b.textContent = nameOf[e.id]||e.name||e.id;
+      b.onclick = ()=> downloadCsvOne(e.id, nameOf[e.id]||'');
+      el.appendChild(b);
+    });
+  }
 
-  refresh();
-}
-
-document.addEventListener('DOMContentLoaded', init);
+  // ===== 画面制御 =====
+  async function refresh(){
+    const m = $('#mon').value; if(!m){ alert('対象月を選択してください'); return; }
+    try{
+      $('#btnRefresh').disabled = true;
+      const [rows, emps] = await Promise.all([fetchSummary(m), fetchEmployees()]);
+      renderSummary(rows, emps);
+      renderEmployeesChips(rows, emps);
+    }catch(err){
+      alert('読込に失敗しました：' + (err.message||err));
+    }finally{
+      $('#btnRefresh').disabled = false;
+    }
+  }
+  function init(){
+    const d=new Date(); $('#mon').value=`${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+    $('#btnRefresh').addEventListener('click', refresh);
+    $('#btnCsvAll').addEventListener('click', downloadCsvAll);
+    refresh();
+  }
+  document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
