@@ -14,7 +14,8 @@
   .brand{display:flex;align-items:center;gap:10px}
   .brand h1{font-size:16px;margin:0}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  input[type="month"]{appearance:none;border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:10px;font:inherit}
+  input[type="month"],input[type="text"],input[type="number"]{appearance:none;border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:10px;font:inherit;width:100%}
+  label{font-size:12px;color:var(--muted);display:block;margin:6px 0 4px}
   button{border:1px solid var(--line);background:var(--card);padding:10px 12px;border-radius:10px;font:inherit;cursor:pointer}
   .btn{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
   .btn-ghost{background:var(--card);color:var(--ink)}
@@ -26,11 +27,13 @@
   th:first-child,td:first-child{text-align:left}
   th{background:#fafafa;font-weight:600}
   .chips{display:flex;flex-direction:column;gap:10px}
-  .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;background:var(--chip);border-radius:999px;border:1px solid var(--line)}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;background:var(--chip);border-radius:999px;border:1px solid var(--line);width:100%;text-align:left}
   .muted{color:var(--muted)}
   .right{margin-left:auto}
   .num{font-variant-numeric:tabular-nums}
-  @media (min-width:860px){ .grid{display:grid;grid-template-columns:260px 1fr;gap:16px} }
+  @media (min-width:960px){ .grid{display:grid;grid-template-columns:300px 1fr;gap:16px} }
+  .section-title{font-weight:600;margin:8px 0 12px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -47,12 +50,55 @@
 
   <main>
     <div class="grid">
+      <!-- 左カラム：氏名リスト + 編集フォーム -->
       <div class="card">
         <div class="pad">
-          <div class="muted" style="margin-bottom:8px">氏名</div>
-          <div id="empList" class="chips"></div>
+          <div class="section-title">氏名</div>
+          <div id="empList" class="chips" style="margin-bottom:14px"></div>
+
+          <hr style="border:none;border-top:1px solid var(--line);margin:12px 0" />
+
+          <div class="section-title">従業員の編集</div>
+          <div class="muted" id="editHint">左の氏名をクリックするとここに詳細が出ます</div>
+          <div id="editForm" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr;gap:10px">
+              <div>
+                <label>従業員ID（読み取り専用）</label>
+                <input type="text" id="f_id" readonly />
+              </div>
+              <div>
+                <label>コード</label>
+                <input type="text" id="f_code" />
+              </div>
+              <div>
+                <label>氏名</label>
+                <input type="text" id="f_name" />
+              </div>
+              <div>
+                <label>時給（円）</label>
+                <input type="number" id="f_wage" step="1" min="0" />
+              </div>
+              <div>
+                <label>交通費（月・定額/案A）（円）</label>
+                <input type="number" id="f_commute" step="1" min="0" />
+              </div>
+              <div>
+                <label>状態</label>
+                <div class="actions">
+                  <button type="button" id="f_active_on"  class="btn-ghost">有効にする</button>
+                  <button type="button" id="f_active_off" class="btn-ghost">無効にする</button>
+                </div>
+              </div>
+            </div>
+            <div class="actions" style="margin-top:12px">
+              <button class="btn" id="btnSaveEmp">💾 保存</button>
+              <span id="saveMsg" class="muted"></span>
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- 右カラム：サマリー -->
       <div class="card">
         <div class="pad">
           <table id="sumTable" class="num">
@@ -67,12 +113,15 @@
   </main>
 
 <script>
-  // ★あなたの GAS(B) の /exec に固定
+  // ★あなたの GAS(B) の /exec
   const BASE = 'https://script.google.com/macros/s/AKfycbyXku_YsY0Yh8hZvDSwlp0ilu3ZLLXsamvwDTYnLt5LrAMgYQYWMAa-xABFi8vRXv-w/exec';
 
   const $ = (s)=>document.querySelector(s);
   const fmtYen = n => Number(n||0).toLocaleString('ja-JP');
   const pad2 = n => String(n).padStart(2,'0');
+
+  let EMP_CACHE = [];   // employees_full の結果を保持
+  let CURRENT_ID = '';  // 編集対象
 
   // ===== CSV ダウンロード =====
   async function downloadCsvAll(){
@@ -110,13 +159,69 @@
     const r = await fetch(`${BASE}?action=employees_full`);
     if(!r.ok) throw new Error('employees fetch failed');
     const j = await r.json(); if(!j.ok) throw new Error(j.error||'employees error');
-    return j.employees||[];
+    EMP_CACHE = j.employees||[];
+    return EMP_CACHE;
+  }
+
+  // ===== 編集フォーム =====
+  function showEdit(emp){
+    $('#editHint').style.display='none';
+    $('#editForm').style.display='';
+    $('#f_id').value = emp.id||'';
+    $('#f_code').value = emp.code||'';
+    $('#f_name').value = emp.name||'';
+    $('#f_wage').value = emp.hourly_wage||0;
+    $('#f_commute').value = emp.commute_fixed||0;
+    CURRENT_ID = emp.id||'';
+
+    // active切替UI
+    const on  = $('#f_active_on');
+    const off = $('#f_active_off');
+    function paint(){
+      on.className  = emp.active ? 'btn' : 'btn-ghost';
+      off.className = emp.active ? 'btn-ghost' : 'btn';
+    }
+    on.onclick  = ()=>{ emp.active = true;  paint(); };
+    off.onclick = ()=>{ emp.active = false; paint(); };
+    paint();
+
+    $('#btnSaveEmp').onclick = async ()=>{
+      $('#saveMsg').textContent = '保存中…';
+      const payload = {
+        action:'employee_update',
+        id: CURRENT_ID,
+        code:  $('#f_code').value,
+        name:  $('#f_name').value,
+        hourly_wage: Number($('#f_wage').value||0),
+        commute_fixed: Number($('#f_commute').value||0),
+        active: emp.active ? true : false,
+      };
+      try{
+        const res = await fetch(BASE, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const j = await res.json();
+        if(!j.ok) throw new Error(j.error||'save failed');
+
+        $('#saveMsg').textContent = '保存しました';
+        // キャッシュ更新
+        const idx = EMP_CACHE.findIndex(e=> e.id===CURRENT_ID);
+        if(idx>=0) EMP_CACHE[idx] = {...EMP_CACHE[idx], ...payload};
+        // 右表の名前表示の（無効）を反映させるため再描画
+        refreshSummaryOnly();
+      }catch(e){
+        alert(e.message||e);
+        $('#saveMsg').textContent = '';
+      }
+    };
   }
 
   // ===== 描画 =====
-  function renderSummary(rows, employees){
+  function renderSummary(rows){
     const tbody = $('#sumBody'); tbody.innerHTML = '';
-    const nameOf = {}; employees.forEach(e=> nameOf[e.id] = e.name + (e.active?'':'（無効）'));
+    const nameOf = {}; EMP_CACHE.forEach(e=> nameOf[e.id] = e.name + (e.active?'':'（無効）'));
     rows.forEach(r=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -128,22 +233,31 @@
       tbody.appendChild(tr);
     });
   }
-  function renderEmployeesChips(rows, employees){
+  function renderEmployeesChips(rows){
     const el = $('#empList'); el.innerHTML='';
-    const nameOf = {}; employees.forEach(e=> nameOf[e.id] = e.name + (e.active?'':'（無効）'));
     const seen = new Set();
+    const nameOf = {}; EMP_CACHE.forEach(e=> nameOf[e.id] = e.name + (e.active?'':'（無効）'));
+
+    // 当月出勤者を上に
     rows.forEach(r=>{
       seen.add(r.employee_id);
       const b = document.createElement('button');
       b.type='button'; b.className='chip'; b.textContent = nameOf[r.employee_id]||r.employee_name||r.employee_id;
-      b.onclick = ()=> downloadCsvOne(r.employee_id, nameOf[r.employee_id]||'');
+      b.onclick = ()=>{
+        const emp = EMP_CACHE.find(e=> e.id===r.employee_id);
+        if(emp){ showEdit(emp); }
+      };
+      // 長押し/右クリックで個別CSV
+      b.oncontextmenu = (e)=>{ e.preventDefault(); downloadCsvOne(r.employee_id, nameOf[r.employee_id]||''); };
       el.appendChild(b);
     });
-    employees.forEach(e=>{
+    // 未出勤者も下に並べる
+    EMP_CACHE.forEach(e=>{
       if(seen.has(e.id)) return;
       const b = document.createElement('button');
       b.type='button'; b.className='chip'; b.textContent = nameOf[e.id]||e.name||e.id;
-      b.onclick = ()=> downloadCsvOne(e.id, nameOf[e.id]||'');
+      b.onclick = ()=> showEdit(e);
+      b.oncontextmenu = (ev)=>{ ev.preventDefault(); downloadCsvOne(e.id, nameOf[e.id]||''); };
       el.appendChild(b);
     });
   }
@@ -153,15 +267,23 @@
     const m = $('#mon').value; if(!m){ alert('対象月を選択してください'); return; }
     try{
       $('#btnRefresh').disabled = true;
-      const [rows, emps] = await Promise.all([fetchSummary(m), fetchEmployees()]);
-      renderSummary(rows, emps);
-      renderEmployeesChips(rows, emps);
+      const [emps, rows] = await Promise.all([fetchEmployees(), fetchSummary(m)]);
+      renderSummary(rows);
+      renderEmployeesChips(rows);
     }catch(err){
       alert('読込に失敗しました：' + (err.message||err));
     }finally{
       $('#btnRefresh').disabled = false;
     }
   }
+  async function refreshSummaryOnly(){
+    const m = $('#mon').value; if(!m) return;
+    try{
+      const rows = await fetchSummary(m);
+      renderSummary(rows);
+    }catch{}
+  }
+
   function init(){
     const d=new Date(); $('#mon').value=`${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
     $('#btnRefresh').addEventListener('click', refresh);
