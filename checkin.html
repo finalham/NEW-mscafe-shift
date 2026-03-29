@@ -8,112 +8,190 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --coffee:#6b4f4f; --latte:#f7efe5; --cream:#fffaf3; --sage:#3e7a6b;
-    --ink:#2a2a2a; --muted:#7a6f69; --line:#e9ddd3; --line2:#e7e7e7;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{margin:0;color:var(--ink);background:
-    radial-gradient(1000px 700px at 0% -10%, rgba(255,255,255,.9), transparent 50%),
-    radial-gradient(900px 600px at 120% 0%, rgba(247,239,229,.9), transparent 40%),
-    linear-gradient(180deg, #fff, var(--latte));
-    font:16px/1.5 'Montserrat','Noto Sans JP',system-ui,-apple-system,Segoe UI,Roboto,Meiryo,sans-serif;
-  }
-  /* cafe header */
-  header{
-    position:sticky; top:0; z-index:10;
-    background:linear-gradient(180deg,var(--cream),rgba(255,255,255,.88));
-    backdrop-filter:blur(6px);
-    border-bottom:1px solid var(--line);
-    padding:14px 16px; display:flex; align-items:center; gap:12px;
-  }
-  .logo{width:36px;height:36px;border-radius:50%; display:grid;place-items:center;color:#fff;
-        background:conic-gradient(from 210deg,var(--coffee),#a37a74);}
-  .brand{font-family:'Pacifico',cursive; font-size:22px; color:var(--coffee); letter-spacing:.4px}
-  main{max-width:780px;margin:0 auto;padding:16px}
-  .card{background:#fff;border:1px solid var(--line2);border-radius:14px;padding:14px 14px 18px;margin:12px 0;box-shadow:0 6px 18px rgba(0,0,0,.05)}
-  label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
-  input,select,button{width:100%;padding:12px;border:1px solid var(--line2);border-radius:12px;background:#fff;font-size:16px}
-  input:focus,select:focus{outline:2px solid rgba(62,122,107,.18);border-color:var(--sage)}
-  .row{display:grid;grid-template-columns:1fr;gap:12px}
-  .btn{cursor:pointer;font-weight:700}
-  .btn.primary{background:var(--sage);color:#fff;border-color:var(--sage);box-shadow:0 6px 18px rgba(62,122,107,.25)}
-  .btn.ghost{background:#fff;color:var(--coffee)}
-  .muted{color:var(--muted);font-size:13px}
-  table{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
-  th,td{border:1px solid var(--line2);padding:8px}
-  thead th{background:linear-gradient(180deg,#fff,#faf7f3);position:sticky;top:0}
-  @media(min-width:680px){ .row{grid-template-columns:repeat(2,1fr)} }
+:root{
+--coffee:#6b4f4f; --latte:#f7efe5; --cream:#fffaf3; --sage:#3e7a6b;
+--ink:#2a2a2a; --muted:#7a6f69; --line:#e9ddd3; --line2:#e7e7e7;
+--success:#3e7a6b; --error:#dc2626;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;color:var(--ink);background:
+radial-gradient(1000px 700px at 0% -10%, rgba(255,255,255,.9), transparent 50%),
+radial-gradient(900px 600px at 120% 0%, rgba(247,239,229,.9), transparent 40%),
+linear-gradient(180deg, #fff, var(--latte));
+font:16px/1.5 'Montserrat','Noto Sans JP',system-ui,-apple-system,Segoe UI,Roboto,Meiryo,sans-serif;
+}
+header{
+position:sticky; top:0; z-index:10;
+background:linear-gradient(180deg,var(--cream),rgba(255,255,255,.88));
+backdrop-filter:blur(6px);
+border-bottom:1px solid var(--line);
+padding:14px 16px; display:flex; align-items:center; gap:12px;
+}
+.logo{width:36px;height:36px;border-radius:50%; display:grid;place-items:center;color:#fff;
+background:conic-gradient(from 210deg,var(--coffee),#a37a74);}
+.brand{font-family:'Pacifico',cursive; font-size:22px; color:var(--coffee); letter-spacing:.4px}
+main{max-width:780px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line2);border-radius:14px;padding:14px 14px 18px;margin:12px 0;box-shadow:0 6px 18px rgba(0,0,0,.05)}
+label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+input,select,button{width:100%;padding:12px;border:1px solid var(--line2);border-radius:12px;background:#fff;font-size:16px}
+input:focus,select:focus{outline:2px solid rgba(62,122,107,.18);border-color:var(--sage)}
+.row{display:grid;grid-template-columns:1fr;gap:12px}
+.btn{cursor:pointer;font-weight:700}
+.btn.primary{background:var(--sage);color:#fff;border-color:var(--sage);box-shadow:0 6px 18px rgba(62,122,107,.25)}
+.btn.ghost{background:#fff;color:var(--coffee)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.muted{color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
+th,td{border:1px solid var(--line2);padding:8px}
+thead th{background:linear-gradient(180deg,#fff,#faf7f3);position:sticky;top:0}
+
+/* 確認メッセージ */
+#msg{
+margin-top:12px;
+padding:10px 14px;
+border-radius:10px;
+font-size:14px;
+font-weight:600;
+display:none;
+}
+#msg.success{
+display:block;
+background:#f0faf6;
+border:1px solid #a7d4c7;
+color:var(--success);
+}
+#msg.error{
+display:block;
+background:#fff5f5;
+border:1px solid #fca5a5;
+color:var(--error);
+}
+#msg.loading{
+display:block;
+background:#f7f7f7;
+border:1px solid var(--line2);
+color:var(--muted);
+}
+
+/* 従業員ローディング表示 */
+#emp:disabled{color:var(--muted)}
+
+@media(min-width:680px){ .row{grid-template-columns:repeat(2,1fr)} }
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">☕</div>
-  <div class="brand">Mscafe SHIFT</div>
+<div class="logo">☕</div>
+<div class="brand">Mscafe SHIFT</div>
 </header>
 
 <main>
-  <div class="card">
-    <div class="row">
-      <div>
-        <label>従業員</label>
-        <select id="emp"></select>
-      </div>
-      <div>
-        <label>休憩（分）</label>
-        <input id="break" type="number" inputmode="numeric" min="0" step="5" value="0">
-      </div>
-      <div>
-        <label>開始（日時）</label>
-        <input id="start" type="datetime-local">
-      </div>
-      <div>
-        <label>終了（日時）</label>
-        <input id="end" type="datetime-local">
-      </div>
-    </div>
-    <div class="row" style="margin-top:12px">
-      <button id="btnNow" class="btn ghost">🕒 現在時刻をセット</button>
-      <button id="btnSave" class="btn primary">💾 保存</button>
-    </div>
-    <!-- 概算日給は非表示 → 文言だけのシンプルな結果表示に変更 -->
-    <p id="msg" class="muted" style="margin-top:10px"></p>
-  </div>
+<div class="card">
+<div class="row">
+<div>
+<label>従業員</label>
+<select id="emp"><option value="">読み込み中…</option></select>
+</div>
+<div>
+<label>休憩（分）</label>
+<input id="break" type="number" inputmode="numeric" min="0" step="5" value="0">
+</div>
+<div>
+<label>開始（日時）</label>
+<input id="start" type="datetime-local">
+</div>
+<div>
+<label>終了（日時）</label>
+<input id="end" type="datetime-local">
+</div>
+</div>
+<div class="row" style="margin-top:12px">
+<button id="btnNow" class="btn ghost">🕒 現在時刻をセット</button>
+<button id="btnSave" class="btn primary">💾 保存</button>
+</div>
+<div id="msg"></div>
+</div>
 
-  <div class="card">
-    <h3 style="margin:0 0 8px;color:var(--coffee)">最近の入力</h3>
-    <table id="recent">
-      <thead><tr><th>氏名</th><th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<div class="card">
+<h3 style="margin:0 0 8px;color:var(--coffee)">最近の入力</h3>
+<table id="recent">
+<thead><tr><th>氏名</th><th>日付</th><th>出勤</th><th>退勤</th><th>休憩</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
 </main>
 
 <script>
-/* API A（あなたのURL。拠点フィールドは送らない実装） */
 const API_A = 'https://script.google.com/macros/s/AKfycbwZj9yYSMNfbTLGyPRXwm73oK4GuMVbO1bvcVjnZlbIYT5Zg5J4deMP2gWXqimBp6Tg3g/exec';
+
+// ── キャッシュ設定 ──────────────────────────────────
+const EMP_CACHE_KEY = 'mscafe_employees_v1';
+const EMP_CACHE_TTL = 60 * 60 * 1000; // 1時間
 
 function pad(n){return String(n).padStart(2,'0')}
 function toLocalInputValue(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes()) }
-function hm(d){ return pad(d.getHours())+":"+pad(d.getMinutes()) }
+
+// datetime-local の値（"2026-02-01T12:30"）から直接HH:MMを取り出す
+function extractHM(datetimeLocalValue){
+  return (datetimeLocalValue||'').slice(11,16) || '--:--';
+}
 
 async function getJSON(url){
   const r = await fetch(url, {credentials:"omit", cache:"no-store"});
   return await r.json();
 }
+
 async function postJSON(url, obj){
   const r = await fetch(url, {method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(obj)});
   return await r.json();
 }
 
-async function loadEmployees(){
-  const data = await getJSON(API_A+'?action=employees');
-  const sel = document.getElementById('emp');
+// ── 従業員リスト描画 ────────────────────────────────
+function renderEmployees(sel, data){
+  const currentVal = sel.value;
   sel.innerHTML = '';
-  (data.employees||[]).filter(e=>e.active).forEach(e=>{
-    const o = document.createElement('option'); o.value=e.id; o.textContent=e.name; sel.appendChild(o);
+  const list = (data.employees||[]).filter(e=>e.active);
+  if(list.length === 0){
+    sel.innerHTML = '<option value="">（従業員なし）</option>';
+    return;
+  }
+  list.forEach(e=>{
+    const o = document.createElement('option');
+    o.value = e.id;
+    o.textContent = e.name;
+    sel.appendChild(o);
   });
+  // 選択状態を復元
+  if(currentVal) sel.value = currentVal;
+}
+
+// ── 従業員リスト読み込み（キャッシュ対応）──────────────
+async function loadEmployees(){
+  const sel = document.getElementById('emp');
+
+  // ① キャッシュを即座に表示
+  try {
+    const cached = localStorage.getItem(EMP_CACHE_KEY);
+    if(cached){
+      const {data, ts} = JSON.parse(cached);
+      renderEmployees(sel, data);
+      // キャッシュが新鮮なら再取得しない
+      if(Date.now() - ts < EMP_CACHE_TTL) return;
+    }
+  } catch(e) { /* キャッシュ読み込みエラーは無視 */ }
+
+  // ② バックグラウンドで最新データを取得（キャッシュが古い or なし）
+  try {
+    const data = await getJSON(API_A+'?action=employees');
+    localStorage.setItem(EMP_CACHE_KEY, JSON.stringify({data, ts: Date.now()}));
+    renderEmployees(sel, data);
+  } catch(e) {
+    // キャッシュが既に表示されていれば問題なし。なければエラー表示
+    if(!sel.children.length || sel.children[0].value === ''){
+      sel.innerHTML = '<option value="">読み込みエラー（再読み込みしてください）</option>';
+    }
+  }
 }
 
 function setNow(){
@@ -123,36 +201,76 @@ function setNow(){
   document.getElementById('end').value = v;
 }
 
+// ── 保存処理 ────────────────────────────────────────
 async function saveShift(){
   const emp = document.getElementById('emp').value;
   const start = document.getElementById('start').value;
   const end = document.getElementById('end').value;
   const br = parseInt(document.getElementById('break').value||'0');
-  if(!emp || !start || !end){ alert('従業員/開始/終了 を入力してください'); return; }
+  const msg = document.getElementById('msg');
+  const btnSave = document.getElementById('btnSave');
+
+  if(!emp || !start || !end){
+    alert('従業員／開始／終了 を入力してください');
+    return;
+  }
+
+  const empName = document.getElementById('emp').selectedOptions[0]?.text || '';
   const body = {
     employee_id: emp,
-    employee_name: document.getElementById('emp').selectedOptions[0]?.text || '',
+    employee_name: empName,
     date: start.slice(0,10),
     startISO: new Date(start).toISOString(),
     endISO: new Date(end).toISOString(),
     break_min: br,
     user_agent: navigator.userAgent
   };
-  const res = await postJSON(API_A+'?action=shift', body);
-  const msg = document.getElementById('msg');
-  if(res && res.ok){
-    msg.textContent = `保存しました。（実働 ${(res.worked_min/60).toFixed(2)} h）`;
-    addRecentRow(body.employee_name, body.date, start, end, br);
-  }else{
-    msg.textContent = 'エラー：' + (res && res.error ? res.error : '不明なエラー');
+
+  // 保存中 UI
+  msg.className = 'loading';
+  msg.textContent = '⏳ 保存中…';
+  btnSave.disabled = true;
+
+  try {
+    const res = await postJSON(API_A+'?action=shift', body);
+
+    if(res && res.ok){
+      const dateStr = body.date;
+      const startTime = extractHM(start);
+      const endTime = extractHM(end);
+      const workedH = (res.worked_min != null)
+        ? (res.worked_min / 60).toFixed(2) + ' h'
+        : '−';
+
+      // ✅ 保存成功：内容を詳しく表示
+      msg.className = 'success';
+      msg.innerHTML =
+        `✅ 保存しました<br>` +
+        `<span style="font-weight:400;font-size:13px">` +
+        `${empName}　${dateStr}　${startTime}〜${endTime}　休憩 ${br}分　実働 ${workedH}` +
+        `</span>`;
+
+      addRecentRow(empName, dateStr, startTime, endTime, br);
+    } else {
+      msg.className = 'error';
+      msg.textContent = '❌ エラー：' + (res?.error || '不明なエラー');
+    }
+  } catch(e) {
+    msg.className = 'error';
+    msg.textContent = '❌ 通信エラーが発生しました。ネットワークを確認して再度お試しください。';
+  } finally {
+    btnSave.disabled = false;
   }
 }
 
-function addRecentRow(name, date, start, end, br){
+// ── 最近の入力テーブルに行を追加 ────────────────────
+// start/end はすでに "HH:MM" 形式で渡す
+function addRecentRow(name, date, startHM, endHM, br){
   const tb = document.querySelector('#recent tbody');
   const tr = document.createElement('tr');
-  const st = new Date(start), ed = new Date(end);
-  tr.innerHTML = `<td>${name||''}</td><td>${date}</td><td>${hm(st)}</td><td>${hm(ed)}</td><td style="text-align:right">${br}</td>`;
+  tr.innerHTML =
+    `<td>${name||''}</td><td>${date}</td><td>${startHM}</td><td>${endHM}</td>` +
+    `<td style="text-align:right">${br}</td>`;
   tb.prepend(tr);
 }
 
